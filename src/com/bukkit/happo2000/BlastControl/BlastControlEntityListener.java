@@ -30,7 +30,7 @@ public class BlastControlEntityListener extends EntityListener
 		Vector		vTarget = new Vector(lTarget.getX(), lTarget.getY(), lTarget.getZ());
 		
 		if (vTarget.isInSphere(vCreeper, 5))
-			mobTarget.damage(1, mobTarget);
+			mobTarget.damage(1, mobCreeper);
     }
 
     @Override
