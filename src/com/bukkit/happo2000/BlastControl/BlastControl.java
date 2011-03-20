@@ -350,7 +350,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 				for (int curZ = posZ + 1; curZ > minZ; --curZ)
 				{
 					metaChunk = chunkList.get(Integer.valueOf((curX & 0xFFFF) | (curZ << 16)));
-					
+
 					if (metaChunk != null)
 					{
 						EnumBlastLimit 	tempBlastLimit  = metaChunk.getValidBlastStatus(nTime);
@@ -361,8 +361,8 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 							
 							if (blastLimit == EnumBlastLimit.BELOW_LIMIT_ONLY) // BELOW_LIMIT_ONLY overrides NO_RESTRICTION
 							{
-								curZ = minX; // Exit For
-								curX = minZ; // Exit For
+								curZ = minZ; // Exit For
+								curX = minX; // Exit For
 							}
 						}
 					}
