@@ -43,6 +43,8 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     public static final String 	PERMISSION_RECLAIM    			= "bc.tnt.reclaim";
     public static final String 	PERMISSION_SET_LIMIT    		= "bc.set.limit";
     public static final String 	PERMISSION_SET_CREEPER    		= "bc.set.creeper";
+    public static final String 	PERMISSION_SET_YIELD    		= "bc.set.yield";
+    public static final String 	PERMISSION_SET_RADIUS    		= "bc.set.radius";
     public static final String 	PERMISSION_ENABLE_DISABLE    	= "bc.set.enable";
 
     public static final String 	CONFIGUATION_FILE  				= "blastcontrol.cfg";
@@ -54,6 +56,8 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     private EnumCreeperSetting 	eCreeperSetting			= EnumCreeperSetting.LIMITED_WITH_FANGS;
     private int 				nBlastLimit				= 54;	  // 54th level
     private int					nBlastTriggerLimit		= 10000;  // 10 seconds
+    private float				fBlastYield				= 0.3f;
+    private int					nBlastRadius			= 4;
     
     public BlastControl() 
     {
@@ -109,10 +113,12 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     		
         	configFile.load(is);
 
-        	bEnabled 			= configFile.getProperty("Enabled").equals("true");
-        	nBlastLimit 		= Integer.parseInt(configFile.getProperty("BlastLimit"));
-        	nBlastTriggerLimit 	= Integer.parseInt(configFile.getProperty("BlastTriggerLimit"));
-        	eCreeperSetting		= BlastHelper.parseCreeperSetting(configFile.getProperty("CreeperSetting"));
+        	this.bEnabled 			= configFile.getProperty("Enabled").equals("true");
+        	this.nBlastLimit 		= Integer.parseInt(configFile.getProperty("BlastLimit"));
+        	this.nBlastTriggerLimit = Integer.parseInt(configFile.getProperty("BlastTriggerLimit"));
+        	this.eCreeperSetting	= BlastHelper.parseCreeperSetting(configFile.getProperty("CreeperSetting"));
+        	this.nBlastRadius 		= Integer.parseInt(configFile.getProperty("BlastRadius"));
+        	this.fBlastYield 		= Float.parseFloat(configFile.getProperty("BlastYield"));
         	
         	is.close();
 		} 
@@ -127,10 +133,12 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     	// Yeah, this is garbage. Will replace later.
         Properties configFile = new Properties();
     
-    	configFile.setProperty("Enabled", Boolean.toString(bEnabled));
-    	configFile.setProperty("CreeperSetting", BlastHelper.getConfigFriendlyName(eCreeperSetting));
-    	configFile.setProperty("BlastLimit", Integer.toString(nBlastLimit));
-    	configFile.setProperty("BlastTriggerLimit", Integer.toString(nBlastTriggerLimit));
+    	configFile.setProperty("Enabled", Boolean.toString(this.bEnabled));
+    	configFile.setProperty("CreeperSetting", BlastHelper.getConfigFriendlyName(this.eCreeperSetting));
+    	configFile.setProperty("BlastLimit", Integer.toString(this.nBlastLimit));
+    	configFile.setProperty("BlastTriggerLimit", Integer.toString(this.nBlastTriggerLimit));
+    	configFile.setProperty("BlastYield", Float.toString(this.fBlastYield));
+    	configFile.setProperty("BlastRadius", Integer.toString(this.nBlastRadius));
 		
     	try 
 		{
@@ -162,6 +170,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
         		showStatus(sender);
         	else if (subCommandName.equals("limit"))
         		setBlastLimit(sender, trimmedArgs);
+        	else if (subCommandName.equals("yield"))
+        		setBlastYield(sender, trimmedArgs);
+        	else if (subCommandName.equals("radius"))
+        		setBlastRadius(sender, trimmedArgs);
         	else if (subCommandName.equals("triggerlimit"))
         		setBlastTriggerLimit(sender, trimmedArgs);
         	else if (subCommandName.equals("enable"))
@@ -195,6 +207,12 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			sender.sendMessage(DISPLAY_PREFIX + "/bc triggerlimit [#] - Sets a new time-to-link limit on explosions");
 		}
 		
+		if (CheckPermission(sender, PERMISSION_SET_YIELD))
+			sender.sendMessage(DISPLAY_PREFIX + "/bc yield [%] - Sets a new item destruction percentage");
+
+		if (CheckPermission(sender, PERMISSION_SET_RADIUS))
+			sender.sendMessage(DISPLAY_PREFIX + "/bc radius [#] - Sets a new explosion radius");
+
 		if (CheckPermission(sender, PERMISSION_ENABLE_DISABLE))
 			sender.sendMessage(DISPLAY_PREFIX + "/bc [enable/disable] - Enable/Disable BlastControl");
 
@@ -250,9 +268,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 					
 					if (nLimit <= 128)
 					{
-						nBlastLimit = nLimit;
+						this.nBlastLimit = nLimit;
 
-						sender.sendMessage(DISPLAY_PREFIX + "New Blast Height: " + ChatColor.AQUA + Integer.toString(nBlastLimit));
+						sender.sendMessage(DISPLAY_PREFIX + "New Blast Height: " + ChatColor.AQUA + Integer.toString(this.nBlastLimit));
 
 						saveConfiguation();
 
@@ -272,6 +290,78 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
 	}
 	
+	public void setBlastYield(CommandSender sender, String[] args) 
+	{
+		if (CheckPermission(sender, PERMISSION_SET_YIELD))
+		{
+			boolean bParseFailed = true;
+
+			if (args.length >= 2)
+			{
+				try
+				{
+					float fYield = Integer.parseInt(args[1]) / 100.0f;
+					
+					if (fYield >= 0.0f && fYield <= 1.0f)
+					{
+						this.fBlastYield = fYield;
+	
+						sender.sendMessage(DISPLAY_PREFIX + "Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(this.fBlastYield * 100.0f)) + "%");
+	
+						saveConfiguation();
+						
+						bParseFailed = false;
+					}
+				}
+				catch (NumberFormatException nfe) { /* do nothing */ }
+			}
+			
+			if (bParseFailed)
+			{
+				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc yield <pct>");
+				sender.sendMessage(DISPLAY_PREFIX + "Valid range is 0 to 100.");
+			}
+		}
+		else
+			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
+	}
+
+	public void setBlastRadius(CommandSender sender, String[] args) 
+	{
+		if (CheckPermission(sender, PERMISSION_SET_RADIUS))
+		{
+			boolean bParseFailed = true;
+
+			if (args.length >= 2)
+			{
+				try
+				{
+					int nRadius = Integer.parseInt(args[1]);
+					
+					if (nRadius >= 0 && nRadius <= 1000)
+					{
+						this.nBlastRadius = nRadius;
+	
+						sender.sendMessage(DISPLAY_PREFIX + "Blast Radius: " + ChatColor.AQUA + Integer.toString(this.nBlastRadius) + ChatColor.WHITE + " blocks.");
+	
+						saveConfiguation();
+						
+						bParseFailed = false;
+					}
+				}
+				catch (NumberFormatException nfe) { /* do nothing */ }
+			}
+			
+			if (bParseFailed)
+			{
+				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc radius <size>");
+				sender.sendMessage(DISPLAY_PREFIX + "Valid range is 0 to 1000.");
+			}
+		}
+		else
+			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
+	}
+	
 	public void setBlastTriggerLimit(CommandSender sender, String[] args)
 	{
 		if (CheckPermission(sender, PERMISSION_SET_LIMIT))
@@ -282,11 +372,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			{
 				try
 				{
-					int nTriggerLimit = Integer.parseInt(args[1]);
-					
-					nBlastTriggerLimit = nTriggerLimit;
+					nBlastTriggerLimit = Integer.parseInt(args[1]);
 
-					sender.sendMessage(DISPLAY_PREFIX + "Max Blast Trigger Timing: " + ChatColor.AQUA + Integer.toString(nTriggerLimit) + ChatColor.WHITE + " millis");
+					sender.sendMessage(DISPLAY_PREFIX + "Max Blast Trigger Timing: " + ChatColor.AQUA + Integer.toString(nBlastTriggerLimit) + ChatColor.WHITE + " millis");
 
 					saveConfiguation();
 					
@@ -311,8 +399,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 		
 		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + ChatColor.AQUA + (bEnabled ? "Enabled" : "Disabled"));
 
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(nBlastLimit) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(eCreeperSetting));
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(nBlastTriggerLimit) + ChatColor.WHITE + " millis");
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(this.nBlastLimit) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(this.eCreeperSetting));
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(this.nBlastTriggerLimit) + ChatColor.WHITE + " millis");
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Radius : " + ChatColor.AQUA + Integer.toString(this.nBlastRadius) + ChatColor.WHITE + " blocks - Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(this.fBlastYield * 100.0f)) + "%");
 	
 		if (bEnabled)
 		{
@@ -433,6 +522,16 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 	public int getBlastLimit()
 	{
 		return nBlastLimit;
+	}
+
+	public float getBlastYield() 
+	{
+		return fBlastYield;
+	}
+
+	public int getBlastRadius() 
+	{
+		return nBlastRadius;
 	}
 
 	public EnumCreeperSetting getCreeperSetting()

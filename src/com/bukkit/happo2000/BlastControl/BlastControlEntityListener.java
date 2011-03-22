@@ -77,6 +77,8 @@ public class BlastControlEntityListener extends EntityListener
 	    	{
 	    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
 	    		
+	    		event.setRadius(plugin.getBlastRadius());
+	    		
 	    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
 	    		{
 	    		case BELOW_LIMIT_ONLY:
@@ -96,6 +98,8 @@ public class BlastControlEntityListener extends EntityListener
 		if (plugin.isInternallyEnabled() && (!event.isCancelled()) && event.getEntity() instanceof TNTPrimed)
     	{
     		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
+
+    		event.setYield(plugin.getBlastYield());
     		
     		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
     		{
