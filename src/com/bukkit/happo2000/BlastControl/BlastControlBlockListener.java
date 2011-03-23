@@ -23,7 +23,7 @@ public class BlastControlBlockListener extends BlockListener
     {
     	Block targetBlock = event.getBlock();
     	
-    	if (plugin.isInternallyEnabled() && targetBlock.getType() == Material.TNT && plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_RECLAIM))
+    	if (plugin.getBlastConfiguration().isPluginEnabled() && targetBlock.getType() == Material.TNT && plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_RECLAIM))
     	{
     		ItemStack heldItem = event.getPlayer().getItemInHand();
     		
@@ -39,16 +39,18 @@ public class BlastControlBlockListener extends BlockListener
 
     public void onBlockPlace(BlockPlaceEvent event) 
     {
-    	if (plugin.isInternallyEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+
+    	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
     	{
     		boolean bCancel = true;
     		
         	if (plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_TNT_ALLOWED))
         	{
-        		if (event.getBlock().getY() <= plugin.getBlastLimit() || plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_PLACE_ABOVE_LIMIT))
+        		if (event.getBlock().getY() <= blastConfig.getBlastLimit() || plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_PLACE_ABOVE_LIMIT))
         			bCancel = false;
         		else
-        			event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You cannot place TNT above level " + ChatColor.AQUA + Integer.toString(plugin.getBlastLimit()) + ChatColor.WHITE + ".");
+        			event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You cannot place TNT above level " + ChatColor.AQUA + Integer.toString(blastConfig.getBlastLimit()) + ChatColor.WHITE + ".");
         	}
         	else
 	    		event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You do not have permissions to use TNT.");
@@ -59,7 +61,9 @@ public class BlastControlBlockListener extends BlockListener
 
     public void onBlockDamage(BlockDamageEvent event) 
     {
-    	if (plugin.isInternallyEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+    	
+    	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
     	{
     		Block 		targetBlock 		= event.getBlock();
 
@@ -79,10 +83,10 @@ public class BlastControlBlockListener extends BlockListener
 	        	{
 	        		bActivateAboveLimit = plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT);
 	        		
-	        		if (targetBlock.getY() <= plugin.getBlastLimit() || bActivateAboveLimit)
+	        		if (targetBlock.getY() <= blastConfig.getBlastLimit() || bActivateAboveLimit)
 	        			bCancel = false;
 	        		else
-	        			event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You cannot activate TNT above level " + ChatColor.AQUA + Integer.toString(plugin.getBlastLimit()) + ChatColor.WHITE + ".");
+	        			event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You cannot activate TNT above level " + ChatColor.AQUA + Integer.toString(blastConfig.getBlastLimit()) + ChatColor.WHITE + ".");
 	        	}
 	        	else
 		    		event.getPlayer().sendMessage(BlastControl.DISPLAY_PREFIX + "You do not have permissions to use TNT.");

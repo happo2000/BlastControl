@@ -36,11 +36,13 @@ public class BlastControlEntityListener extends EntityListener
     @Override
     public void onExplosionPrimed(ExplosionPrimedEvent event) 
     {
-    	if (plugin.isInternallyEnabled() && !event.isCancelled())
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+    	
+    	if (blastConfig.isPluginEnabled() && !event.isCancelled())
     	{
-	    	if (plugin.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
+	    	if (blastConfig.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
 	    	{
-	    		switch (plugin.getCreeperSetting())
+	    		switch (blastConfig.getCreeperSetting())
 	    		{
 	    			case DISABLED_WITH_DESPAWN:
 		    			event.getEntity().remove();
@@ -54,21 +56,21 @@ public class BlastControlEntityListener extends EntityListener
 		    			event.setCancelled(true);
 		    			break;
 		    		case LIMITED_WITH_DESPAWN:
-	    				if (event.getEntity().getLocation().getBlockY() > plugin.getBlastLimit())
+	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
 	    				{
 	    					creeperAttackTarget((Creeper)event.getEntity());
 	    					event.setCancelled(true);
 	    				}
 	    				break;
 		    		case LIMITED_WITH_FANGS:
-	    				if (event.getEntity().getLocation().getBlockY() > plugin.getBlastLimit())
+	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
 	    				{
 	    					creeperAttackTarget((Creeper)event.getEntity());
 	    					event.setCancelled(true);
 	    				}
 	    				break;
 	    			case LIMITED:
-	    				if (event.getEntity().getLocation().getBlockY() > plugin.getBlastLimit())
+	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
 	    					event.setCancelled(true);
 		    			break;
 	    		}
@@ -77,12 +79,12 @@ public class BlastControlEntityListener extends EntityListener
 	    	{
 	    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
 	    		
-	    		event.setRadius(plugin.getBlastRadius());
+	    		event.setRadius(blastConfig.getBlastRadius());
 	    		
 	    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
 	    		{
 	    		case BELOW_LIMIT_ONLY:
-	    			if (event.getEntity().getLocation().getBlockY() <= plugin.getBlastLimit())
+	    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
 	    				break;
 	    		case DISABLED:
 	    			event.getEntity().remove();
@@ -95,16 +97,18 @@ public class BlastControlEntityListener extends EntityListener
     @Override
     public void onEntityExplode(EntityExplodeEvent event) 
     {
-		if (plugin.isInternallyEnabled() && (!event.isCancelled()) && event.getEntity() instanceof TNTPrimed)
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+
+		if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getEntity() instanceof TNTPrimed)
     	{
     		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
 
-    		event.setYield(plugin.getBlastYield());
+    		event.setYield(blastConfig.getBlastYield());
     		
     		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
     		{
     		case BELOW_LIMIT_ONLY:
-    			if (event.getEntity().getLocation().getBlockY() <= plugin.getBlastLimit())
+    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
     				break;
     		case DISABLED:
     			event.getEntity().remove();

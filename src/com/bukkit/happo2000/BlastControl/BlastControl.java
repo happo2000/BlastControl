@@ -1,17 +1,9 @@
 package com.bukkit.happo2000.BlastControl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,13 +20,14 @@ import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class BlastControl extends JavaPlugin implements CommandExecutor
 {
-    private final 	BlastControlEntityListener		entityListener  = new BlastControlEntityListener(this);
-    private final 	BlastControlBlockListener 		blockListener   = new BlastControlBlockListener(this);
-    private final	BlastControlWorldListener		worldListener	= new BlastControlWorldListener(this);
-    private final	BlastControlPlayerListener		playerListener  = new BlastControlPlayerListener(this);
+    private final 	BlastControlEntityListener		entityListener  	= new BlastControlEntityListener(this);
+    private final 	BlastControlBlockListener 		blockListener   	= new BlastControlBlockListener(this);
+    private final	BlastControlWorldListener		worldListener		= new BlastControlWorldListener(this);
+    private final	BlastControlPlayerListener		playerListener  	= new BlastControlPlayerListener(this);
+    private final	HashMap<Integer,MetadataChunk>	chunkList			= new HashMap<Integer,MetadataChunk>();
+    private final	List<Integer>					playerList			= new ArrayList<Integer>();
+    private final	BlastConfiguration				blastConfiguration	= new BlastConfiguration();
     private  		PermissionHandler 				permissions;
-    private final	HashMap<Integer,MetadataChunk>	chunkList		= new HashMap<Integer,MetadataChunk>();
-    private final	List<Integer>					playerList		= new ArrayList<Integer>();
     
     // Constants
     public static final String 	PERMISSION_PLACE_ABOVE_LIMIT  	= "bc.tnt.abovelimit.place";
@@ -47,17 +40,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     public static final String 	PERMISSION_SET_RADIUS    		= "bc.set.radius";
     public static final String 	PERMISSION_ENABLE_DISABLE    	= "bc.set.enable";
 
-    public static final String 	CONFIGUATION_FILE  				= "blastcontrol.cfg";
-    
     public static final String  DISPLAY_PREFIX					= ChatColor.AQUA + "[" + ChatColor.WHITE + "BC" + ChatColor.AQUA + "]" + ChatColor.WHITE + " "; 
-    
-    // Configuration
-    private boolean				bEnabled				= true;
-    private EnumCreeperSetting 	eCreeperSetting			= EnumCreeperSetting.LIMITED_WITH_FANGS;
-    private int 				nBlastLimit				= 54;	  // 54th level
-    private int					nBlastTriggerLimit		= 10000;  // 10 seconds
-    private float				fBlastYield				= 0.3f;
-    private int					nBlastRadius			= 4;
     
     public BlastControl() 
     {
@@ -66,95 +49,43 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 
     public void onEnable() 
     {
-        PluginManager pluginManager = getServer().getPluginManager();
+        PluginManager 			pluginManager 		= getServer().getPluginManager();
+        Plugin 					permissionsPlugin 	= pluginManager.getPlugin("Permissions");
+        PluginDescriptionFile 	pdfFile 			= this.getDescription();
 
-        Plugin permissionsPlugin = this.getServer().getPluginManager().getPlugin("Permissions");
-
-        PluginDescriptionFile pdfFile = this.getDescription();
-
-        if (permissionsPlugin == null)
-        	System.out.println( "[" + pdfFile.getName() + "] WARNING!!! - 'Permissions' plugin not present, setting to disabled state.");
+    	blastConfiguration.loadConfiguation();
+    	
+    	if (permissionsPlugin == null)
+        {
+        	blastConfiguration.loadPermissions();
+        	System.out.println(pdfFile.getName() + " - Permissions plugin not detected.");
+        }
         else
         {
             this.permissions = ((Permissions)permissionsPlugin).getHandler();
-        
-            // Functionality Events
-	    	pluginManager.registerEvent(Event.Type.BLOCK_PLACED, this.blockListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.BLOCK_DAMAGED, this.blockListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIMED, this.entityListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.ENTITY_EXPLODE, this.entityListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.BLOCK_RIGHTCLICKED, this.blockListener, Event.Priority.High, this);
-	    	
-	    	// Cleanup Events
-	    	pluginManager.registerEvent(Event.Type.CHUNK_UNLOADED, this.worldListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.PLAYER_KICK, this.playerListener, Event.Priority.High, this);
-	    	pluginManager.registerEvent(Event.Type.PLAYER_QUIT, this.playerListener, Event.Priority.High, this);
-	    	
-	    	loadConfiguation();
-	    	
-	    	getCommand("bc").setExecutor(this);
+            blastConfiguration.setPermissionsEnabled(true);
+        }        
+
+        // Functionality Events
+    	pluginManager.registerEvent(Event.Type.BLOCK_PLACED, this.blockListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.BLOCK_DAMAGED, this.blockListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIMED, this.entityListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.ENTITY_EXPLODE, this.entityListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.BLOCK_RIGHTCLICKED, this.blockListener, Event.Priority.High, this);
+    	
+    	// Cleanup Events
+    	pluginManager.registerEvent(Event.Type.CHUNK_UNLOADED, this.worldListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.PLAYER_KICK, this.playerListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.PLAYER_QUIT, this.playerListener, Event.Priority.High, this);
+    	
+    	getCommand("bc").setExecutor(this);
 	        
-	        System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
-        }
+        System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
     }
-    
-    public void loadConfiguation()
-    {
-    	// Yeah, this is garbage. Will replace later.
-        Properties configFile = new Properties();
-        File file = new File(CONFIGUATION_FILE);
-        
-        if (!file.exists())
-        	saveConfiguation();
-        	
-    	try 
-		{
-    		InputStream is = new FileInputStream(file);
-    		
-        	configFile.load(is);
 
-        	this.bEnabled 			= configFile.getProperty("Enabled").equals("true");
-        	this.nBlastLimit 		= Integer.parseInt(configFile.getProperty("BlastLimit"));
-        	this.nBlastTriggerLimit = Integer.parseInt(configFile.getProperty("BlastTriggerLimit"));
-        	this.eCreeperSetting	= BlastHelper.parseCreeperSetting(configFile.getProperty("CreeperSetting"));
-        	this.nBlastRadius 		= Integer.parseInt(configFile.getProperty("BlastRadius"));
-        	this.fBlastYield 		= Float.parseFloat(configFile.getProperty("BlastYield"));
-        	
-        	is.close();
-		} 
-		catch (Exception e)
-		{
-			System.out.println("[BlastControl] Unable to load configuation file.");
-		}
-    }
-    
-    public void saveConfiguation()
+    public void onDisable() 
     {
-    	// Yeah, this is garbage. Will replace later.
-        Properties configFile = new Properties();
-    
-    	configFile.setProperty("Enabled", Boolean.toString(this.bEnabled));
-    	configFile.setProperty("CreeperSetting", BlastHelper.getConfigFriendlyName(this.eCreeperSetting));
-    	configFile.setProperty("BlastLimit", Integer.toString(this.nBlastLimit));
-    	configFile.setProperty("BlastTriggerLimit", Integer.toString(this.nBlastTriggerLimit));
-    	configFile.setProperty("BlastYield", Float.toString(this.fBlastYield));
-    	configFile.setProperty("BlastRadius", Integer.toString(this.nBlastRadius));
-		
-    	try 
-		{
-    		OutputStream os = new FileOutputStream(new File(CONFIGUATION_FILE));
-    		
-        	configFile.store(os, "BlastControl Configuation");
-
-        	os.flush();
-        	os.close();
-		} 
-		catch (IOException e)
-		{
-			System.out.println("[BlastControl] Unable to save configuation file.");
-		}
-		
-		configFile.clear();
+    	blastConfiguration.disableSilently();
     }
     
     @Override
@@ -184,6 +115,8 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
         		setCreeperState(sender, trimmedArgs);
         	else if (subCommandName.equals("reclaim"))
         		toggleReclaim(sender);
+        	else if ((!blastConfiguration.isPermissionsEnabled()) && subCommandName.equals("reload"))
+        		blastConfiguration.loadPermissions();
         	else
         		showHelp(sender);
         }
@@ -218,18 +151,18 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 
 		if (CheckPermission(sender, PERMISSION_SET_CREEPER))
 			sender.sendMessage(DISPLAY_PREFIX + "/bc creeper [enable/disable/disable-fangs/disable-despawn/limit/limit-fangs/limit-depawn] - Sets different creeper behavior");
-
+		
+		if (sender.isOp() && !blastConfiguration.isPermissionsEnabled())
+			sender.sendMessage(DISPLAY_PREFIX + "/bc reload - Reloads the user permission file");
 	}
 	
 	public void setBlastControlEnabled(CommandSender sender, boolean bState)
 	{
 		if (CheckPermission(sender, PERMISSION_ENABLE_DISABLE))
 		{
-			bEnabled = bState;
+			blastConfiguration.setPluginEnabled(bState);
 			
-			saveConfiguation();
-			
-			sender.sendMessage(DISPLAY_PREFIX + "Set Internal Status: " + ChatColor.AQUA + (bEnabled ? "Enabled" : "Disabled"));
+			sender.sendMessage(DISPLAY_PREFIX + "Set Internal Status: " + ChatColor.AQUA + (blastConfiguration.isPluginEnabled() ? "Enabled" : "Disabled"));
 		}
 		else
 			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
@@ -241,11 +174,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 		{
 			if (args.length >= 2)
 			{
-				eCreeperSetting = BlastHelper.parseCreeperSetting(args[1]);
+				blastConfiguration.setCreeperSetting(BlastHelper.parseCreeperSetting(args[1]));
 
-				saveConfiguation();
-
-				sender.sendMessage(DISPLAY_PREFIX + "Creeper Blast : " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(eCreeperSetting));
+				sender.sendMessage(DISPLAY_PREFIX + "Creeper Blast : " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
 			}
 			else
 				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc creeper [enable/disable/disable-fangs/disable-despawn/limit/limit-fangs/limit-depawn]");
@@ -268,11 +199,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 					
 					if (nLimit <= 128)
 					{
-						this.nBlastLimit = nLimit;
+						blastConfiguration.setBlastLimit(nLimit);
 
-						sender.sendMessage(DISPLAY_PREFIX + "New Blast Height: " + ChatColor.AQUA + Integer.toString(this.nBlastLimit));
-
-						saveConfiguation();
+						sender.sendMessage(DISPLAY_PREFIX + "New Blast Height: " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()));
 
 						bParseFailed = false;
 					}
@@ -304,12 +233,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 					
 					if (fYield >= 0.0f && fYield <= 1.0f)
 					{
-						this.fBlastYield = fYield;
+						blastConfiguration.setBlastYield(fYield);
 	
-						sender.sendMessage(DISPLAY_PREFIX + "Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(this.fBlastYield * 100.0f)) + "%");
+						sender.sendMessage(DISPLAY_PREFIX + "Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(blastConfiguration.getBlastYield() * 100.0f)) + "%");
 	
-						saveConfiguation();
-						
 						bParseFailed = false;
 					}
 				}
@@ -340,12 +267,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 					
 					if (nRadius >= 0 && nRadius <= 1000)
 					{
-						this.nBlastRadius = nRadius;
+						blastConfiguration.setBlastRadius(nRadius);
 	
-						sender.sendMessage(DISPLAY_PREFIX + "Blast Radius: " + ChatColor.AQUA + Integer.toString(this.nBlastRadius) + ChatColor.WHITE + " blocks.");
+						sender.sendMessage(DISPLAY_PREFIX + "Blast Radius: " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastRadius()) + ChatColor.WHITE + " blocks.");
 	
-						saveConfiguation();
-						
 						bParseFailed = false;
 					}
 				}
@@ -372,12 +297,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			{
 				try
 				{
-					nBlastTriggerLimit = Integer.parseInt(args[1]);
+					blastConfiguration.setBlastTriggerLimit(Integer.parseInt(args[1]));
 
-					sender.sendMessage(DISPLAY_PREFIX + "Max Blast Trigger Timing: " + ChatColor.AQUA + Integer.toString(nBlastTriggerLimit) + ChatColor.WHITE + " millis");
+					sender.sendMessage(DISPLAY_PREFIX + "Max Blast Trigger Timing: " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastTriggerLimit()) + ChatColor.WHITE + " millis");
 
-					saveConfiguation();
-					
 					bParseFailed = false;
 				}
 				catch (NumberFormatException nfe) { /* do nothing */ }
@@ -397,13 +320,13 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 	{
 		PluginDescriptionFile pdfFile = this.getDescription();
 		
-		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + ChatColor.AQUA + (bEnabled ? "Enabled" : "Disabled"));
+		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + ChatColor.AQUA + (blastConfiguration.isPluginEnabled() ? "Enabled" : "Disabled"));
 
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(this.nBlastLimit) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(this.eCreeperSetting));
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(this.nBlastTriggerLimit) + ChatColor.WHITE + " millis");
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Radius : " + ChatColor.AQUA + Integer.toString(this.nBlastRadius) + ChatColor.WHITE + " blocks - Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(this.fBlastYield * 100.0f)) + "%");
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastTriggerLimit()) + ChatColor.WHITE + " millis");
+		sender.sendMessage(DISPLAY_PREFIX + "Blast Radius : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastRadius()) + ChatColor.WHITE + " blocks - Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(blastConfiguration.getBlastYield() * 100.0f)) + "%");
 	
-		if (bEnabled)
+		if (blastConfiguration.isPluginEnabled())
 		{
 			boolean bTNTAllowed 		= CheckPermission(sender, PERMISSION_TNT_ALLOWED);
 			boolean bPlaceAboveLimit 	= CheckPermission(sender, PERMISSION_PLACE_ABOVE_LIMIT);
@@ -414,10 +337,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			if (bTNTAllowed)
 			{
 				if (!bPlaceAboveLimit)
-					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only place at level " + ChatColor.AQUA + Integer.toString(nBlastLimit) + ChatColor.WHITE + " and below.");
+					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only place at level " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " and below.");
 
 				if (!bActivateAboveLimit)
-					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only activate at level " + ChatColor.AQUA + Integer.toString(nBlastLimit) + ChatColor.WHITE + " and below.");
+					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only activate at level " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " and below.");
 			}
 		}
 	}
@@ -425,7 +348,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 	public EnumBlastLimit getBlastStatus(int posX, int posZ)
 	{
 		EnumBlastLimit 	blastLimit 	= EnumBlastLimit.DISABLED;
-		long 			nTime 		= Calendar.getInstance().getTimeInMillis() - nBlastTriggerLimit;
+		long 			nTime 		= Calendar.getInstance().getTimeInMillis() - blastConfiguration.getBlastTriggerLimit();
 
 		MetadataChunk 	metaChunk 	= chunkList.get(Integer.valueOf((posX & 0xFFFF) | (posZ << 16)));
 		
@@ -519,45 +442,19 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 		playerList.remove(Integer.valueOf(entityId));
 	}
 
-	public int getBlastLimit()
-	{
-		return nBlastLimit;
-	}
-
-	public float getBlastYield() 
-	{
-		return fBlastYield;
-	}
-
-	public int getBlastRadius() 
-	{
-		return nBlastRadius;
-	}
-
-	public EnumCreeperSetting getCreeperSetting()
-	{
-		return eCreeperSetting;
-	}
-    
-    public boolean isInternallyEnabled()
-    {
-    	return bEnabled;
-    }
-
     public boolean CheckPermission(CommandSender sender, String permissionName)
     {
-    	return sender.isOp() || CheckPermission((Player)sender, permissionName);
+		return sender.isOp() || CheckPermission((Player)sender, permissionName);
     }
     
 	public boolean CheckPermission(Player player, String permissionName)
 	{
-        return permissions.has(player, permissionName);
+		if (blastConfiguration.isPermissionsEnabled())
+			return permissions.has(player, permissionName);
+		else
+			return blastConfiguration.isOpsRequired(permissionName) ? player.isOp() : true;
 	}
 
-    public void onDisable() 
-    {
-    }
-    
     public boolean isDebugging(final Player player) 
     {
         return false;
@@ -566,5 +463,10 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     public void setDebugging(final Player player, final boolean value) 
     {
     }
+
+	public BlastConfiguration getBlastConfiguration() 
+	{
+		return blastConfiguration;
+	}
 }
 
