@@ -99,21 +99,24 @@ public class BlastControlEntityListener extends EntityListener
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
 
-		if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getEntity() instanceof TNTPrimed)
-    	{
-    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
-
+    	if (blastConfig.isPluginEnabled() && (!event.isCancelled()))
+		{
     		event.setYield(blastConfig.getBlastYield());
-    		
-    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
-    		{
-    		case BELOW_LIMIT_ONLY:
-    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
-    				break;
-    		case DISABLED:
-    			event.getEntity().remove();
-    			event.setCancelled(true);
-    		}
+		
+			if (event.getEntity() instanceof TNTPrimed)
+	    	{
+	    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
+	
+	    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
+	    		{
+	    		case BELOW_LIMIT_ONLY:
+	    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
+	    				break;
+	    		case DISABLED:
+	    			event.getEntity().remove();
+	    			event.setCancelled(true);
+	    		}
+	    	}
     	}
     }
 }

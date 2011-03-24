@@ -1,6 +1,6 @@
 name: BlastControl
 main: com.bukkit.happo2000.BlastControl.BlastControl
-version: 0.9.1
+version: 0.9.2
 author: happo2000
 description: Controls various aspects of explosions and TNT use
 commands:
