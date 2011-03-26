@@ -150,7 +150,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			sender.sendMessage(DISPLAY_PREFIX + "/bc [enable/disable] - Enable/Disable BlastControl");
 
 		if (CheckPermission(sender, PERMISSION_SET_CREEPER))
-			sender.sendMessage(DISPLAY_PREFIX + "/bc creeper [enable/disable/disable-fangs/disable-despawn/limit/limit-fangs/limit-depawn] - Sets different creeper behavior");
+			sender.sendMessage(DISPLAY_PREFIX + "/bc creeper [enable/disable/disable-fangs/disable-despawn/limit/limit-fangs/limit-depawn/limit-entity] - Sets different creeper behavior");
 		
 		if (sender.isOp() && !blastConfiguration.isPermissionsEnabled())
 			sender.sendMessage(DISPLAY_PREFIX + "/bc reload - Reloads the user permission file");

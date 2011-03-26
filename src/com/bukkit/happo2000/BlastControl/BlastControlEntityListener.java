@@ -117,6 +117,17 @@ public class BlastControlEntityListener extends EntityListener
 	    			event.setCancelled(true);
 	    		}
 	    	}
+			else if (event.getEntity() instanceof Creeper)
+			{
+				switch (blastConfig.getCreeperSetting())
+				{
+				case LIMITED_ONLY_ENTITY:
+	    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
+	    				break;
+				case DISABLED_ONLY_ENTITY:
+					event.setCancelled(true);
+				}
+			}
     	}
     }
 }
