@@ -1,7 +1,11 @@
 package com.bukkit.happo2000.BlastControl;
 
+import net.minecraft.server.EntityCreeper;
+import net.minecraft.server.EntityTNTPrimed;
+
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.TNTPrimed;
@@ -29,7 +33,7 @@ public class BlastControlEntityListener extends EntityListener
 		Location  	lTarget = mobTarget.getLocation();
 		Vector		vTarget = new Vector(lTarget.getX(), lTarget.getY(), lTarget.getZ());
 		
-		if (vTarget.isInSphere(vCreeper, 5))
+		if (vTarget.isInSphere(vCreeper, 4))
 			mobTarget.damage(1, mobCreeper);
     }
 
@@ -126,6 +130,11 @@ public class BlastControlEntityListener extends EntityListener
 	    				break;
 				case DISABLED_ONLY_ENTITY:
 					event.setCancelled(true);
+
+					// Make explosion noise
+					CraftWorld world = (CraftWorld)event.getEntity().getWorld();
+					
+					world.getHandle().a(null, event.getLocation().getX(), event.getLocation().getY(), event.getLocation().getZ(), 0);
 				}
 			}
     	}

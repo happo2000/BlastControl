@@ -63,6 +63,8 @@ public class BlastControlBlockListener extends BlockListener
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
     	
+    	System.out.println("test");
+    	
     	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
     	{
     		Block 		targetBlock 		= event.getBlock();
