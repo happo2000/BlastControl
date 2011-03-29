@@ -1,23 +1,42 @@
 package com.bukkit.happo2000.BlastControl;
 
-import net.minecraft.server.EntityCreeper;
-import net.minecraft.server.EntityTNTPrimed;
-
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
+import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.ExplosionPrimedEvent;
 import org.bukkit.util.Vector;
 
 public class BlastControlEntityListener extends EntityListener 
 {
     private final BlastControl plugin;
-
+    
+    class PrimedEventHandler
+    {
+    	private Entity 		entity;
+    	private float 		fRadius;
+		private boolean 	bCancelled;
+    	
+    	public PrimedEventHandler(Entity entity, float fRadius, boolean bCancelled)
+    	{
+    		this.entity 	= entity;
+    		this.fRadius 	= fRadius;
+    		this.bCancelled = false;
+    	}
+    	
+    	public Entity 		getEntity() 						{ return entity; };
+    	public float 		getRadius() 						{ return fRadius; };
+    	public void			setRadius(float fRadius)			{ this.fRadius = fRadius; };
+    	public boolean 		isCancelled() 						{ return bCancelled; };
+    	public void			setCancelled(boolean bCancelled)	{ this.bCancelled = bCancelled; };
+    }
+    
     public BlastControlEntityListener(BlastControl instance) 
     {
         plugin = instance;
@@ -37,64 +56,90 @@ public class BlastControlEntityListener extends EntityListener
 			mobTarget.damage(1, mobCreeper);
     }
 
-    @Override
-    public void onExplosionPrimed(ExplosionPrimedEvent event) 
+    public void onExplosionPrimed(ExplosionPrimedEvent event) // Old and broken
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
     	
     	if (blastConfig.isPluginEnabled() && !event.isCancelled())
     	{
-	    	if (blastConfig.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
-	    	{
-	    		switch (blastConfig.getCreeperSetting())
-	    		{
-	    			case DISABLED_WITH_DESPAWN:
-		    			event.getEntity().remove();
-		    			event.setCancelled(true);
-	    				break;
-	    			case DISABLED_WITH_FANGS:
-	    				creeperAttackTarget((Creeper)event.getEntity());
-		    			event.setCancelled(true);
-		    			break;
-		    		case DISABLED:
-		    			event.setCancelled(true);
-		    			break;
-		    		case LIMITED_WITH_DESPAWN:
-	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
-	    				{
-	    					creeperAttackTarget((Creeper)event.getEntity());
-	    					event.setCancelled(true);
-	    				}
-	    				break;
-		    		case LIMITED_WITH_FANGS:
-	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
-	    				{
-	    					creeperAttackTarget((Creeper)event.getEntity());
-	    					event.setCancelled(true);
-	    				}
-	    				break;
-	    			case LIMITED:
-	    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
-	    					event.setCancelled(true);
-		    			break;
-	    		}
-	    	}
-	    	else if (event.getEntity() instanceof TNTPrimed)
-	    	{
-	    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
-	    		
-	    		event.setRadius(blastConfig.getBlastRadius());
-	    		
-	    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
-	    		{
-	    		case BELOW_LIMIT_ONLY:
-	    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
-	    				break;
-	    		case DISABLED:
-	    			event.getEntity().remove();
+        	PrimedEventHandler primeEventHandler = new PrimedEventHandler(event.getEntity(), event.getRadius(), event.isCancelled());
+    		
+        	onExplosionIntermediate(primeEventHandler);
+        	
+        	event.setRadius(primeEventHandler.getRadius());
+        	event.setCancelled(primeEventHandler.isCancelled());
+    	}
+    }
+
+    public void onExplosionPrime(ExplosionPrimeEvent event) // New hotness 
+    {
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+    	
+    	if (blastConfig.isPluginEnabled() && !event.isCancelled())
+    	{
+        	PrimedEventHandler primeEventHandler = new PrimedEventHandler(event.getEntity(), event.getRadius(), event.isCancelled());
+        	
+        	onExplosionIntermediate(primeEventHandler);
+    		
+        	event.setRadius(primeEventHandler.getRadius());
+        	event.setCancelled(primeEventHandler.isCancelled());
+    	}
+    }
+    
+    public void onExplosionIntermediate(PrimedEventHandler event)
+    {
+    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
+    	
+    	if (blastConfig.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
+    	{
+    		switch (blastConfig.getCreeperSetting())
+    		{
+    			case DISABLED_WITH_DESPAWN:
+    				event.getEntity().remove();
 	    			event.setCancelled(true);
-	    		}
-	    	}
+    				break;
+    			case DISABLED_WITH_FANGS:
+    				creeperAttackTarget((Creeper)event.getEntity());
+    				event.setCancelled(true);
+	    			break;
+	    		case DISABLED:
+	    			event.setCancelled(true);
+	    			break;
+	    		case LIMITED_WITH_DESPAWN:
+    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
+    				{
+    					creeperAttackTarget((Creeper)event.getEntity());
+    					event.setCancelled(true);
+    				}
+    				break;
+	    		case LIMITED_WITH_FANGS:
+    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
+    				{
+    					creeperAttackTarget((Creeper)event.getEntity());
+    					event.setCancelled(true);
+    				}
+    				break;
+    			case LIMITED:
+    				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
+    					event.setCancelled(true);
+	    			break;
+    		}
+    	}
+    	else if (event.getEntity() instanceof TNTPrimed)
+    	{
+    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
+    		
+    		event.setRadius(blastConfig.getBlastRadius());
+    		
+    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
+    		{
+    		case BELOW_LIMIT_ONLY:
+    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
+    				break;
+    		case DISABLED:
+    			event.getEntity().remove();
+    			event.setCancelled(true);
+    		}
     	}
     }
     

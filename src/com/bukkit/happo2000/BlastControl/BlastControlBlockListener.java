@@ -7,7 +7,6 @@ import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockRightClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class BlastControlBlockListener extends BlockListener 
@@ -19,24 +18,6 @@ public class BlastControlBlockListener extends BlockListener
         plugin 		= instance;
 	}
     
-    public void onBlockRightClick(BlockRightClickEvent event) 
-    {
-    	Block targetBlock = event.getBlock();
-    	
-    	if (plugin.getBlastConfiguration().isPluginEnabled() && targetBlock.getType() == Material.TNT && plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_RECLAIM))
-    	{
-    		ItemStack heldItem = event.getPlayer().getItemInHand();
-    		
-    		switch (heldItem.getType())
-    		{
-    		case AIR:
-            	targetBlock.setType(Material.AIR);
-	    		event.getPlayer().getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.TNT, 1));
-    			break;
-    		}
-    	}    	
-    }
-
     public void onBlockPlace(BlockPlaceEvent event) 
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
@@ -62,8 +43,6 @@ public class BlastControlBlockListener extends BlockListener
     public void onBlockDamage(BlockDamageEvent event) 
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
-    	
-    	System.out.println("test");
     	
     	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
     	{
