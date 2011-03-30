@@ -34,6 +34,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     public static final String 	PERMISSION_ACTIVATE_ABOVE_LIMIT	= "bc.tnt.abovelimit.activate";
     public static final String 	PERMISSION_TNT_ALLOWED  		= "bc.tnt.allowed";
     public static final String 	PERMISSION_RECLAIM    			= "bc.tnt.reclaim";
+    //public static final String 	PERMISSION_IMMUNE    			= "bc.tnt.immune";
     public static final String 	PERMISSION_SET_LIMIT    		= "bc.set.limit";
     public static final String 	PERMISSION_SET_CREEPER    		= "bc.set.creeper";
     public static final String 	PERMISSION_SET_YIELD    		= "bc.set.yield";
@@ -66,35 +67,18 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
             blastConfiguration.setPermissionsEnabled(true);
         }        
     	
-    	try
-    	{
-    		// New Hotness
-        	pluginManager.registerEvent(Event.Type.BLOCK_PLACE, this.blockListener, Event.Priority.High, this);
-        	pluginManager.registerEvent(Event.Type.BLOCK_DAMAGE, this.blockListener, Event.Priority.High, this);
-        	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIME, this.entityListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.BLOCK_PLACE, 	this.blockListener, 	Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.BLOCK_DAMAGE, 	this.blockListener, 	Event.Priority.High, this);
 
-        	pluginManager.registerEvent(Event.Type.CHUNK_UNLOAD, this.worldListener, Event.Priority.High, this);
-    	}
-    	catch (NoSuchFieldError esfe)
-    	{
-        	try
-        	{
-        		// Old and broken
-            	pluginManager.registerEvent(Event.Type.BLOCK_PLACED, this.blockListener, Event.Priority.High, this);
-            	pluginManager.registerEvent(Event.Type.BLOCK_DAMAGED, this.blockListener, Event.Priority.High, this);
-            	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIMED, this.entityListener, Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.ENTITY_EXPLODE, 	this.entityListener, 	Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIME, this.entityListener, 	Event.Priority.High, this);
+    	//pluginManager.registerEvent(Event.Type.ENTITY_DAMAGE, 	this.entityListener, 	Event.Priority.High, this);
 
-            	pluginManager.registerEvent(Event.Type.CHUNK_UNLOADED, this.worldListener, Event.Priority.High, this);
-        	}
-        	catch (NoSuchFieldError esfe1)
-        	{
-        	}
-        }
+    	pluginManager.registerEvent(Event.Type.PLAYER_KICK, 	this.playerListener, 	Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.PLAYER_QUIT, 	this.playerListener, 	Event.Priority.High, this);
     	
-    	pluginManager.registerEvent(Event.Type.ENTITY_EXPLODE, this.entityListener, Event.Priority.High, this);
-    	pluginManager.registerEvent(Event.Type.PLAYER_KICK, this.playerListener, Event.Priority.High, this);
-    	pluginManager.registerEvent(Event.Type.PLAYER_QUIT, this.playerListener, Event.Priority.High, this);
-    	
+    	pluginManager.registerEvent(Event.Type.CHUNK_UNLOAD, 	this.worldListener, 	Event.Priority.High, this);
+
     	getCommand("bc").setExecutor(this);
 	        
         System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");

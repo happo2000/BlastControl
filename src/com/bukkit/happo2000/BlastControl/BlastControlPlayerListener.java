@@ -1,8 +1,8 @@
 package com.bukkit.happo2000.BlastControl;
 
-import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class BlastControlPlayerListener extends PlayerListener 
 {
@@ -13,7 +13,7 @@ public class BlastControlPlayerListener extends PlayerListener
         plugin = instance;
     }
     
-    public void onPlayerQuit(PlayerEvent event) 
+    public void onPlayerQuit(PlayerQuitEvent event) 
     {
     	plugin.removeFromReclaim(event.getPlayer().getEntityId());
     }
