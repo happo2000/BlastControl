@@ -7,8 +7,8 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
@@ -140,20 +140,22 @@ public class BlastControlEntityListener extends EntityListener
     	}
     }
     
-    /*@Override
+    @Override
     public void onEntityDamage(EntityDamageEvent event) 
     {
     	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
-
+    	
     	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getEntity() instanceof Player)
 		{
 	    	switch (event.getCause())
 	    	{
-	    	case BLOCK_EXPLOSION:
 	    	case ENTITY_EXPLOSION:
+	    		if (!(((EntityDamageByEntityEvent)event).getDamager() instanceof TNTPrimed))
+	    			break;
+	    	case BLOCK_EXPLOSION:
 	    		event.setCancelled(plugin.CheckPermission((Player)event.getEntity(), BlastControl.PERMISSION_IMMUNE));
 	    	}
 		}
-    }*/
+    }
 }
 

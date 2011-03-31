@@ -34,7 +34,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     public static final String 	PERMISSION_ACTIVATE_ABOVE_LIMIT	= "bc.tnt.abovelimit.activate";
     public static final String 	PERMISSION_TNT_ALLOWED  		= "bc.tnt.allowed";
     public static final String 	PERMISSION_RECLAIM    			= "bc.tnt.reclaim";
-    //public static final String 	PERMISSION_IMMUNE    			= "bc.tnt.immune";
+    public static final String 	PERMISSION_IMMUNE    			= "bc.tnt.immune";
     public static final String 	PERMISSION_SET_LIMIT    		= "bc.set.limit";
     public static final String 	PERMISSION_SET_CREEPER    		= "bc.set.creeper";
     public static final String 	PERMISSION_SET_YIELD    		= "bc.set.yield";
@@ -72,11 +72,11 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 
     	pluginManager.registerEvent(Event.Type.ENTITY_EXPLODE, 	this.entityListener, 	Event.Priority.High, this);
     	pluginManager.registerEvent(Event.Type.EXPLOSION_PRIME, this.entityListener, 	Event.Priority.High, this);
-    	//pluginManager.registerEvent(Event.Type.ENTITY_DAMAGE, 	this.entityListener, 	Event.Priority.High, this);
+    	pluginManager.registerEvent(Event.Type.ENTITY_DAMAGE, 	this.entityListener, 	Event.Priority.High, this);
 
     	pluginManager.registerEvent(Event.Type.PLAYER_KICK, 	this.playerListener, 	Event.Priority.High, this);
     	pluginManager.registerEvent(Event.Type.PLAYER_QUIT, 	this.playerListener, 	Event.Priority.High, this);
-    	
+
     	pluginManager.registerEvent(Event.Type.CHUNK_UNLOAD, 	this.worldListener, 	Event.Priority.High, this);
 
     	getCommand("bc").setExecutor(this);
@@ -334,6 +334,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			boolean bActivateAboveLimit	= CheckPermission(sender, PERMISSION_ACTIVATE_ABOVE_LIMIT);
 
 			sender.sendMessage(DISPLAY_PREFIX + "Your status: You are " + (bTNTAllowed ? ChatColor.GREEN + "permitted" : ChatColor.RED + "denied") + ChatColor.WHITE + " the use of TNT.");
+
+			if (CheckPermission(sender, PERMISSION_IMMUNE))
+				sender.sendMessage(DISPLAY_PREFIX + "You are " + ChatColor.GREEN + "immune" + ChatColor.WHITE + " to TNT damage.");
 			
 			if (bTNTAllowed)
 			{

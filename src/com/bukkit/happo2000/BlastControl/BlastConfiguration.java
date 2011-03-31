@@ -164,7 +164,7 @@ public class BlastConfiguration
 			permissionsMap.put(BlastControl.PERMISSION_SET_YIELD, Boolean.TRUE);
 			permissionsMap.put(BlastControl.PERMISSION_SET_RADIUS, Boolean.TRUE);
 			permissionsMap.put(BlastControl.PERMISSION_ENABLE_DISABLE, Boolean.TRUE);
-			//permissionsMap.put(BlastControl.PERMISSION_IMMUNE, Boolean.TRUE);
+			permissionsMap.put(BlastControl.PERMISSION_IMMUNE, Boolean.TRUE);
     	}
 
     	if (file.exists())
@@ -186,7 +186,7 @@ public class BlastConfiguration
 	        	if (configFile.getProperty(BlastControl.PERMISSION_SET_YIELD) != null) 				permissionsMap.put(BlastControl.PERMISSION_SET_YIELD, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_SET_YIELD)));
 	        	if (configFile.getProperty(BlastControl.PERMISSION_SET_RADIUS) != null)				permissionsMap.put(BlastControl.PERMISSION_SET_RADIUS, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_SET_RADIUS)));
 	        	if (configFile.getProperty(BlastControl.PERMISSION_ENABLE_DISABLE) != null) 		permissionsMap.put(BlastControl.PERMISSION_ENABLE_DISABLE, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_ENABLE_DISABLE)));
-	        	//if (configFile.getProperty(BlastControl.PERMISSION_IMMUNE) != null) 				permissionsMap.put(BlastControl.PERMISSION_IMMUNE, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_IMMUNE)));
+	        	if (configFile.getProperty(BlastControl.PERMISSION_IMMUNE) != null) 				permissionsMap.put(BlastControl.PERMISSION_IMMUNE, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_IMMUNE)));
 	        	
 	        	configFile.clear();
 			} 
@@ -216,7 +216,7 @@ public class BlastConfiguration
     	configFile.setProperty(BlastControl.PERMISSION_SET_YIELD, 				permissionsMap.get(BlastControl.PERMISSION_SET_YIELD).toString());
     	configFile.setProperty(BlastControl.PERMISSION_SET_RADIUS, 				permissionsMap.get(BlastControl.PERMISSION_SET_RADIUS).toString());
     	configFile.setProperty(BlastControl.PERMISSION_ENABLE_DISABLE, 			permissionsMap.get(BlastControl.PERMISSION_ENABLE_DISABLE).toString());
-    	//configFile.setProperty(BlastControl.PERMISSION_IMMUNE, 					permissionsMap.get(BlastControl.PERMISSION_IMMUNE).toString());
+    	configFile.setProperty(BlastControl.PERMISSION_IMMUNE, 					permissionsMap.get(BlastControl.PERMISSION_IMMUNE).toString());
     	
 		try 
 		{
