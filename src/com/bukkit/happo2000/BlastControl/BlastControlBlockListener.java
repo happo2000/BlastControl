@@ -4,6 +4,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -42,27 +43,29 @@ public class BlastControlBlockListener extends BlockListener
 
     public void onBlockDamage(BlockDamageEvent event) 
     {
-    	BlastConfiguration blastConfig = plugin.getBlastConfiguration();
-    	
+    	BlastConfiguration 	blastConfig 	= plugin.getBlastConfiguration();
+		
     	if (blastConfig.isPluginEnabled() && (!event.isCancelled()) && event.getBlock().getType() == Material.TNT)
     	{
-    		Block 		targetBlock 		= event.getBlock();
+    		Block 		targetBlock 	= event.getBlock();
+    		Player 		player 			= event.getPlayer();
 
-    		if (plugin.isOnReclaim(event.getPlayer().getEntityId()))
+    		if (plugin.isOnReclaim(player.getEntityId()))
     		{
             	targetBlock.setType(Material.AIR);
         		event.setCancelled(true);
 
-	    		event.getPlayer().getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.TNT, 1));
+        		player.getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.TNT, 1));
     		}
     		else
     		{
 	    		boolean 	bCancel 			= true;
 	    		boolean		bActivateAboveLimit	= false;
+
 	    		
-	        	if (plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_TNT_ALLOWED))
+	        	if (plugin.CheckPermission(player, BlastControl.PERMISSION_TNT_ALLOWED))
 	        	{
-	        		bActivateAboveLimit = plugin.CheckPermission(event.getPlayer(), BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT);
+	        		bActivateAboveLimit = plugin.CheckPermission(player, BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT);
 	        		
 	        		if (targetBlock.getY() <= blastConfig.getBlastLimit() || bActivateAboveLimit)
 	        			bCancel = false;
@@ -76,9 +79,19 @@ public class BlastControlBlockListener extends BlockListener
 	        		event.setCancelled(true);
 	        	else
 	        	{
-	        		Chunk blastChunk = event.getPlayer().getWorld().getChunkAt(targetBlock);
+	        		boolean 		bTNTLinkRestricted		= !plugin.CheckPermission(player, BlastControl.PERMISSION_LINK_ABOVE_LIMIT);
+	        		ChunkBlastData	chunkBlastData			= plugin.getBlastChunkInfo();
+	        		Chunk 			blastChunk 				= event.getBlock().getChunk();
+		    		ChunkMetadata	metaChunk				= new ChunkMetadata(bActivateAboveLimit ? BlastLimit.NO_RESTRICTION : BlastLimit.BELOW_LIMIT_ONLY, 
+		    															blastConfig.getBlastRadius(), 
+		    															blastConfig.getBlastYield(), 
+		    															bTNTLinkRestricted, 
+		    															player.getEntityId());
+		    		
+		    		if (bTNTLinkRestricted)
+		    			chunkBlastData.setLinkLimit(player.getEntityId(), blastConfig.getBlastLinkLimit());
 	        		
-	        		plugin.setChunkStatus(blastChunk.getX(), blastChunk.getZ(), bActivateAboveLimit ? EnumBlastLimit.NO_RESTRICTION: EnumBlastLimit.BELOW_LIMIT_ONLY);
+		    		chunkBlastData.setChunkData(blastChunk.getX(), blastChunk.getZ(), metaChunk);
 	        	}
 	    	}
     	}

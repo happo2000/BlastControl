@@ -44,7 +44,27 @@ public class BlastControlEntityListener extends EntityListener
     	
     	if (blastConfig.isPluginEnabled() && !event.isCancelled())
     	{
-    		if (blastConfig.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
+    		if (event.getEntity() instanceof TNTPrimed)
+        	{
+        		ChunkBlastData	chunkBlastData	= plugin.getBlastChunkInfo();
+        		Chunk 			blastChunk 		= event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
+	    		ChunkMetadata	metaChunk		= chunkBlastData.getChunkData(blastChunk.getX(), blastChunk.getZ());
+
+        		event.setRadius(metaChunk.getBlastRadius());
+        		
+        		switch (metaChunk.getBlastStatus())
+        		{
+        		case BlastLimit.BELOW_LIMIT_ONLY:
+        			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
+        				break;
+        		case BlastLimit.DISABLED:
+        			event.setCancelled(true);
+        		}
+        		
+        		if (!event.isCancelled())
+        			chunkBlastData.setChunkData(blastChunk.getX(), blastChunk.getZ(), metaChunk);
+        	}
+    		else if (blastConfig.getCreeperSetting() != EnumCreeperSetting.ENABLED && event.getEntity() instanceof Creeper)
         	{
         		switch (blastConfig.getCreeperSetting())
         		{
@@ -79,22 +99,6 @@ public class BlastControlEntityListener extends EntityListener
     	    			break;
         		}
         	}
-        	else if (event.getEntity() instanceof TNTPrimed)
-        	{
-        		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
-        		
-        		event.setRadius(blastConfig.getBlastRadius());
-        		
-        		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
-        		{
-        		case BELOW_LIMIT_ONLY:
-        			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
-        				break;
-        		case DISABLED:
-        			event.getEntity().remove();
-        			event.setCancelled(true);
-        		}
-        	}
     	}
     }
     
@@ -105,21 +109,35 @@ public class BlastControlEntityListener extends EntityListener
 
     	if (blastConfig.isPluginEnabled() && (!event.isCancelled()))
 		{
-    		event.setYield(blastConfig.getBlastYield());
-		
 			if (event.getEntity() instanceof TNTPrimed)
 	    	{
-	    		Chunk blastChunk = event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
-	
-	    		switch (plugin.getBlastStatus(blastChunk.getX(), blastChunk.getZ()))
+        		ChunkBlastData	chunkBlastData	= plugin.getBlastChunkInfo();
+	    		Chunk 			blastChunk 		= event.getEntity().getWorld().getChunkAt(event.getEntity().getLocation());
+	    		ChunkMetadata	metaChunk		= plugin.getBlastChunkInfo().getChunkData(blastChunk.getX(), blastChunk.getZ());
+
+	    		event.setYield(metaChunk.getBlastYield());
+
+	    		switch (metaChunk.getBlastStatus())
 	    		{
-	    		case BELOW_LIMIT_ONLY:
+	    		case BlastLimit.BELOW_LIMIT_ONLY:
 	    			if (event.getEntity().getLocation().getBlockY() <= blastConfig.getBlastLimit())
 	    				break;
-	    		case DISABLED:
-	    			event.getEntity().remove();
+	    		case BlastLimit.DISABLED:
 	    			event.setCancelled(true);
 	    		}
+	    		
+	    		if (metaChunk.isLinkLimited())
+	    		{
+	    			int nLinkLeft = chunkBlastData.getLinkLimit(metaChunk.getStartedByPlayerId());
+	    			
+	    			if (nLinkLeft > 0)
+	    				chunkBlastData.setLinkLimit(metaChunk.getStartedByPlayerId(), --nLinkLeft);
+	    			else
+	    				event.setCancelled(true);
+	    		}
+	    		
+        		if (!event.isCancelled())
+        			chunkBlastData.setChunkData(blastChunk.getX(), blastChunk.getZ(), metaChunk);
 	    	}
 			else if (event.getEntity() instanceof Creeper)
 			{

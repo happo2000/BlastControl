@@ -1,8 +1,6 @@
 package com.bukkit.happo2000.BlastControl;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -24,13 +22,14 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
     private final 	BlastControlBlockListener 		blockListener   	= new BlastControlBlockListener(this);
     private final	BlastControlWorldListener		worldListener		= new BlastControlWorldListener(this);
     private final	BlastControlPlayerListener		playerListener  	= new BlastControlPlayerListener(this);
-    private final	HashMap<Integer,MetadataChunk>	chunkList			= new HashMap<Integer,MetadataChunk>();
     private final	List<Integer>					playerList			= new ArrayList<Integer>();
     private final	BlastConfiguration				blastConfiguration	= new BlastConfiguration();
+    private final	ChunkBlastData					chunkBlastData		= new ChunkBlastData(this);
     private  		PermissionHandler 				permissions;
     
     // Constants
     public static final String 	PERMISSION_PLACE_ABOVE_LIMIT  	= "bc.tnt.abovelimit.place";
+    public static final String 	PERMISSION_LINK_ABOVE_LIMIT		= "bc.tnt.abovelimit.link";
     public static final String 	PERMISSION_ACTIVATE_ABOVE_LIMIT	= "bc.tnt.abovelimit.activate";
     public static final String 	PERMISSION_TNT_ALLOWED  		= "bc.tnt.allowed";
     public static final String 	PERMISSION_RECLAIM    			= "bc.tnt.reclaim";
@@ -108,6 +107,8 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
         		setBlastRadius(sender, trimmedArgs);
         	else if (subCommandName.equals("triggerlimit"))
         		setBlastTriggerLimit(sender, trimmedArgs);
+        	else if (subCommandName.equals("linklimit"))
+        		setBlastLinkLimit(sender, trimmedArgs);
         	else if (subCommandName.equals("enable"))
         		setBlastControlEnabled(sender, true);
         	else if (subCommandName.equals("disable"))
@@ -139,6 +140,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 		{
 			sender.sendMessage(DISPLAY_PREFIX + "/bc limit [#] - Sets a new height limit on explosions");
 			sender.sendMessage(DISPLAY_PREFIX + "/bc triggerlimit [#] - Sets a new time-to-link limit on explosions");
+			sender.sendMessage(DISPLAY_PREFIX + "/bc linklimit [#] - Sets a new time-to-link limit on explosions");
 		}
 		
 		if (CheckPermission(sender, PERMISSION_SET_YIELD))
@@ -317,97 +319,64 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
 	}
 	
+	public void setBlastLinkLimit(CommandSender sender, String[] args)
+	{
+		if (CheckPermission(sender, PERMISSION_SET_LIMIT))
+		{
+			boolean bParseFailed = true;
+
+			if (args.length >= 2)
+			{
+				try
+				{
+					blastConfiguration.setBlastLinkLimit(Integer.parseInt(args[1]));
+
+					sender.sendMessage(DISPLAY_PREFIX + "Blast Link Limit: " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLinkLimit()) + ChatColor.WHITE + " links");
+
+					bParseFailed = false;
+				}
+				catch (NumberFormatException nfe) { /* do nothing */ }
+			}
+			
+			if (bParseFailed)
+			{
+				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc linklimit <newlimit>");
+			}
+		}
+		else
+			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
+	}
+	
 	public void showStatus(CommandSender sender)
 	{
 		PluginDescriptionFile pdfFile = this.getDescription();
 		
-		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + ChatColor.AQUA + (blastConfiguration.isPluginEnabled() ? "Enabled" : "Disabled"));
+		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + (blastConfiguration.isPluginEnabled() ? ChatColor.AQUA + "Enabled" : ChatColor.RED + "Disabled"));
 
 		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
 		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastTriggerLimit()) + ChatColor.WHITE + " millis");
 		sender.sendMessage(DISPLAY_PREFIX + "Blast Radius : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastRadius()) + ChatColor.WHITE + " blocks - Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(blastConfiguration.getBlastYield() * 100.0f)) + "%");
 	
-		if (blastConfiguration.isPluginEnabled())
+		if (blastConfiguration.isPluginEnabled() && sender instanceof Player)
 		{
 			boolean bTNTAllowed 		= CheckPermission(sender, PERMISSION_TNT_ALLOWED);
-			boolean bPlaceAboveLimit 	= CheckPermission(sender, PERMISSION_PLACE_ABOVE_LIMIT);
-			boolean bActivateAboveLimit	= CheckPermission(sender, PERMISSION_ACTIVATE_ABOVE_LIMIT);
 
 			sender.sendMessage(DISPLAY_PREFIX + "Your status: You are " + (bTNTAllowed ? ChatColor.GREEN + "permitted" : ChatColor.RED + "denied") + ChatColor.WHITE + " the use of TNT.");
 
 			if (CheckPermission(sender, PERMISSION_IMMUNE))
+			{
 				sender.sendMessage(DISPLAY_PREFIX + "You are " + ChatColor.GREEN + "immune" + ChatColor.WHITE + " to TNT damage.");
+			}
 			
 			if (bTNTAllowed)
 			{
-				if (!bPlaceAboveLimit)
+				if (!CheckPermission(sender, PERMISSION_PLACE_ABOVE_LIMIT))
 					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only place at level " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " and below.");
 
-				if (!bActivateAboveLimit)
+				if (!CheckPermission(sender, PERMISSION_ACTIVATE_ABOVE_LIMIT))
 					sender.sendMessage(DISPLAY_PREFIX + ChatColor.RED + "Restriction" + ChatColor.WHITE + ": You can only activate at level " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " and below.");
 			}
 		}
-	}
-	
-	public EnumBlastLimit getBlastStatus(int posX, int posZ)
-	{
-		EnumBlastLimit 	blastLimit 	= EnumBlastLimit.DISABLED;
-		long 			nTime 		= Calendar.getInstance().getTimeInMillis() - blastConfiguration.getBlastTriggerLimit();
-
-		MetadataChunk 	metaChunk 	= chunkList.get(Integer.valueOf((posX & 0xFFFF) | (posZ << 16)));
-		
-		if (metaChunk == null || (blastLimit = metaChunk.getValidBlastStatus(nTime)) == EnumBlastLimit.DISABLED)
-		{
-			int	minX = posX - 2;
-			int	minZ = posZ - 2;
-			
-			for (int curX = posX + 1; curX > minX; --curX)
-			{
-				for (int curZ = posZ + 1; curZ > minZ; --curZ)
-				{
-					metaChunk = chunkList.get(Integer.valueOf((curX & 0xFFFF) | (curZ << 16)));
-
-					if (metaChunk != null)
-					{
-						EnumBlastLimit 	tempBlastLimit  = metaChunk.getValidBlastStatus(nTime);
-						
-						if (tempBlastLimit != EnumBlastLimit.DISABLED)
-						{
-							blastLimit = tempBlastLimit;
-							
-							if (blastLimit == EnumBlastLimit.BELOW_LIMIT_ONLY) // BELOW_LIMIT_ONLY overrides NO_RESTRICTION
-							{
-								curZ = minZ; // Exit For
-								curX = minX; // Exit For
-							}
-						}
-					}
-				}
-			}
-
-			setChunkStatus(posX, posZ, blastLimit);
-		}
-		
-		return blastLimit;
-	}
-	
-	public void setChunkStatus(int posX, int posZ, EnumBlastLimit status)
-	{
-		int nChunkID = (posX & 0xFFFF) | (posZ << 16);
-		
-		MetadataChunk 	metaChunk 	= chunkList.get(Integer.valueOf(nChunkID));
-		
-		if (metaChunk == null)
-			metaChunk = new MetadataChunk(status);
-		else
-			metaChunk.setBlastStatus(status);
-		
-		chunkList.put(Integer.valueOf(nChunkID), metaChunk);
-	}
-	
-	public void removeChunkStatus(int posX, int posZ)
-	{
-		chunkList.remove(Integer.valueOf((posX & 0xFFFF) | (posZ << 16)));
 	}
 	
 	public boolean isOnReclaim(int entityId)
@@ -471,6 +440,11 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 	public BlastConfiguration getBlastConfiguration() 
 	{
 		return blastConfiguration;
+	}
+
+	public ChunkBlastData getBlastChunkInfo() 
+	{
+		return chunkBlastData;
 	}
 }
 

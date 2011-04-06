@@ -24,6 +24,7 @@ public class BlastConfiguration
     private int							nBlastTriggerLimit		= 10000;  // 10 seconds
     private float						fBlastYield				= 0.3f;   // 30%
     private int							nBlastRadius			= 4;      // 4 blocks
+    private int							nBlastLinkLimit			= 15;	  // 15 TNT links ( 16 TNT detonated )
     
     // State Configuration
     private boolean						bIsPermissionsEnabled	= false;
@@ -61,6 +62,9 @@ public class BlastConfiguration
 
 	        	if (configFile.getProperty("BlastYield") != null)
 	        		this.fBlastYield 		= Float.parseFloat(configFile.getProperty("BlastYield"));
+
+	        	if (configFile.getProperty("BlastLinkLimit") != null)
+	        		this.nBlastLinkLimit 	= Integer.parseInt(configFile.getProperty("BlastLinkLimit"));
 			} 
 			catch (Exception e)
 			{
@@ -106,6 +110,9 @@ public class BlastConfiguration
 
         	if (configFile.getProperty("BlastYield") != null)
         		this.fBlastYield 		= Float.parseFloat(configFile.getProperty("BlastYield"));
+
+        	if (configFile.getProperty("BlastLinkLimit") != null)
+        		this.nBlastLinkLimit	= Integer.parseInt(configFile.getProperty("BlastLinkLimit"));
 		} 
 		catch (Exception e)
 		{
@@ -128,6 +135,7 @@ public class BlastConfiguration
     	configFile.setProperty("BlastTriggerLimit", Integer.toString(this.nBlastTriggerLimit));
     	configFile.setProperty("BlastYield", Float.toString(this.fBlastYield));
     	configFile.setProperty("BlastRadius", Integer.toString(this.nBlastRadius));
+    	configFile.setProperty("BlastLinkLimit", Integer.toString(this.nBlastLinkLimit));
 		
     	try 
 		{
@@ -155,6 +163,7 @@ public class BlastConfiguration
     		permissionsMap = new HashMap<String, Boolean>();
     		
     		// Defaults
+	        permissionsMap.put(BlastControl.PERMISSION_LINK_ABOVE_LIMIT, Boolean.TRUE);
 	        permissionsMap.put(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT, Boolean.TRUE);
 	        permissionsMap.put(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT, Boolean.TRUE);
 			permissionsMap.put(BlastControl.PERMISSION_TNT_ALLOWED, Boolean.FALSE);
@@ -177,6 +186,7 @@ public class BlastConfiguration
 	        	configFile.load(is);
 	        	is.close();
 	
+	        	if (configFile.getProperty(BlastControl.PERMISSION_LINK_ABOVE_LIMIT) != null) 		permissionsMap.put(BlastControl.PERMISSION_LINK_ABOVE_LIMIT, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_LINK_ABOVE_LIMIT)));
 	        	if (configFile.getProperty(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT) != null) 		permissionsMap.put(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT)));
 	        	if (configFile.getProperty(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT) != null) 	permissionsMap.put(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT)));
 	        	if (configFile.getProperty(BlastControl.PERMISSION_TNT_ALLOWED) != null) 			permissionsMap.put(BlastControl.PERMISSION_TNT_ALLOWED, Boolean.parseBoolean(configFile.getProperty(BlastControl.PERMISSION_TNT_ALLOWED)));
@@ -207,6 +217,7 @@ public class BlastConfiguration
         if (!directory.exists())
         	directory.mkdirs();
         
+    	configFile.setProperty(BlastControl.PERMISSION_LINK_ABOVE_LIMIT, 		permissionsMap.get(BlastControl.PERMISSION_LINK_ABOVE_LIMIT).toString());
     	configFile.setProperty(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT, 		permissionsMap.get(BlastControl.PERMISSION_PLACE_ABOVE_LIMIT).toString());
     	configFile.setProperty(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT, 	permissionsMap.get(BlastControl.PERMISSION_ACTIVATE_ABOVE_LIMIT).toString());
     	configFile.setProperty(BlastControl.PERMISSION_TNT_ALLOWED, 			permissionsMap.get(BlastControl.PERMISSION_TNT_ALLOWED).toString());
@@ -325,5 +336,15 @@ public class BlastConfiguration
 	public boolean isPermissionsEnabled() 
 	{
 		return bIsPermissionsEnabled;
+	}
+
+	public void setBlastLinkLimit(int nBlastLinkLimit) 
+	{
+		this.nBlastLinkLimit = nBlastLinkLimit;
+	}
+
+	public int getBlastLinkLimit() 
+	{
+		return nBlastLinkLimit;
 	}
 }

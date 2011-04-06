@@ -14,6 +14,6 @@ public class BlastControlWorldListener extends WorldListener
     
     public void onChunkUnloaded(ChunkUnloadEvent event) 
     {
-    	plugin.removeChunkStatus(event.getChunk().getX(), event.getChunk().getZ());    
+    	plugin.getBlastChunkInfo().removeChunkInfo(event.getChunk().getX(), event.getChunk().getZ());
     }
 }
