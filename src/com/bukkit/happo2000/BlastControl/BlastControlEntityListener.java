@@ -82,7 +82,7 @@ public class BlastControlEntityListener extends EntityListener
     	    		case LIMITED_WITH_DESPAWN:
         				if (event.getEntity().getLocation().getBlockY() > blastConfig.getBlastLimit())
         				{
-        					creeperAttackTarget((Creeper)event.getEntity());
+            				event.getEntity().remove();
         					event.setCancelled(true);
         				}
         				break;

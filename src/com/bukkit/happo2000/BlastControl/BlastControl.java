@@ -153,7 +153,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 			sender.sendMessage(DISPLAY_PREFIX + "/bc [enable/disable] - Enable/Disable BlastControl");
 
 		if (CheckPermission(sender, PERMISSION_SET_CREEPER))
-			sender.sendMessage(DISPLAY_PREFIX + "/bc creeper [enable/disable/disable-fangs/disable-despawn/disable-entity/limit/limit-fangs/limit-depawn/limit-entity] - Sets different creeper behavior");
+			sender.sendMessage(DISPLAY_PREFIX + "/bc creeper [enable/disable/disable-fangs/disable-despawn/disable-entity/limit/limit-fangs/limit-despawn/limit-entity] - Sets different creeper behavior");
 		
 		if (sender.isOp() && !blastConfiguration.isPermissionsEnabled())
 			sender.sendMessage(DISPLAY_PREFIX + "/bc reload - Reloads the user permission file");
@@ -182,7 +182,7 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 				sender.sendMessage(DISPLAY_PREFIX + "Creeper Blast : " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
 			}
 			else
-				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc creeper [enable/disable/disable-fangs/disable-despawn/disable-entity/limit/limit-fangs/limit-depawn/limit-entity]");
+				sender.sendMessage(DISPLAY_PREFIX + "Usage is /bc creeper [enable/disable/disable-fangs/disable-despawn/disable-entity/limit/limit-fangs/limit-despawn/limit-entity]");
 		}
 		else
 			sender.sendMessage(DISPLAY_PREFIX + "Access Denied");
@@ -353,9 +353,9 @@ public class BlastControl extends JavaPlugin implements CommandExecutor
 		
 		sender.sendMessage(DISPLAY_PREFIX + " -- " + pdfFile.getName() + " [v" + pdfFile.getVersion() + "] -- Status: " + (blastConfiguration.isPluginEnabled() ? ChatColor.AQUA + "Enabled" : ChatColor.RED + "Disabled"));
 
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Height Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Trigger Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastTriggerLimit()) + ChatColor.WHITE + " millis");
-		sender.sendMessage(DISPLAY_PREFIX + "Blast Radius : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastRadius()) + ChatColor.WHITE + " blocks - Blast Yield: " + ChatColor.AQUA + Integer.toString((int)(blastConfiguration.getBlastYield() * 100.0f)) + "%");
+		sender.sendMessage(DISPLAY_PREFIX + "Elevation Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastLimit()) + ChatColor.WHITE + " - Creeper Blast: " + ChatColor.AQUA + BlastHelper.getDisplayFriendlyName(blastConfiguration.getCreeperSetting()));
+		sender.sendMessage(DISPLAY_PREFIX + "Trigger Limit : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastTriggerLimit()) + ChatColor.WHITE + " millis - Link Limit: " + ChatColor.AQUA + blastConfiguration.getBlastLinkLimit());
+		sender.sendMessage(DISPLAY_PREFIX + "Radius : " + ChatColor.AQUA + Integer.toString(blastConfiguration.getBlastRadius()) + ChatColor.WHITE + " blocks - Yield: " + ChatColor.AQUA + Integer.toString((int)(blastConfiguration.getBlastYield() * 100.0f)) + "%");
 	
 		if (blastConfiguration.isPluginEnabled() && sender instanceof Player)
 		{

@@ -24,7 +24,7 @@ public class BlastConfiguration
     private int							nBlastTriggerLimit		= 10000;  // 10 seconds
     private float						fBlastYield				= 0.3f;   // 30%
     private int							nBlastRadius			= 4;      // 4 blocks
-    private int							nBlastLinkLimit			= 15;	  // 15 TNT links ( 16 TNT detonated )
+    private int							nBlastLinkLimit			= 64;
     
     // State Configuration
     private boolean						bIsPermissionsEnabled	= false;

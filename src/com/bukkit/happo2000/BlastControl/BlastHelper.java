@@ -29,7 +29,7 @@ public class BlastHelper
 			case DISABLED_WITH_FANGS	: return "disable-fangs";
 			case DISABLED				: return "disable";
 			case DISABLED_ONLY_ENTITY   : return "disable-entity";
-			case LIMITED_WITH_DESPAWN   : return "limit-depawn";
+			case LIMITED_WITH_DESPAWN   : return "limit-despawn";
 			default						:
 			case LIMITED_WITH_FANGS		: return "limit-fangs";
 			case LIMITED_ONLY_ENTITY	: return "limit-entity";
